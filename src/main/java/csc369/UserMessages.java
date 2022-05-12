@@ -19,7 +19,7 @@ public class UserMessages {
     // Mapper for User file
     public static class UserMapper extends Mapper<Text, Text, Text, Text> {
 	@Override
-	    public void map(Text key, Text value, Context context)  throws IOException, InterruptedException {
+        public void map(Text key, Text value, Context context)  throws IOException, InterruptedException {
 	    String name = value.toString();
 	    String out = "A\t"+name;
 	    context.write(key, new Text(out));
@@ -30,7 +30,7 @@ public class UserMessages {
     public static class MessageMapper extends Mapper<LongWritable, Text, Text, Text> {
 
 	@Override
-	    public void map(LongWritable key, Text value, Context context)  throws IOException, InterruptedException {
+        public void map(LongWritable key, Text value, Context context)  throws IOException, InterruptedException {
 	    String text[] = value.toString().split(",");
 	    if (text.length == 2) {
 		String id = text[0];

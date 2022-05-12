@@ -21,6 +21,8 @@ public class HadoopApp {
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
+        conf.set("mapreduce.input.keyvaluelinerecordreader.key.value.separator",",");
+        
         Job job = new Job(conf, "Hadoop example");
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
@@ -28,8 +30,6 @@ public class HadoopApp {
 	    System.out.println("Expected parameters: <job class> [<input dir>]+ <output dir>");
 	    System.exit(-1);
 	} else if ("UserMessages".equalsIgnoreCase(otherArgs[0])) {
-
-	    conf.set("mapreduce.input.keyvaluelinerecordreader.key.value.separator",",");
 
 	    MultipleInputs.addInputPath(job, new Path(otherArgs[1]),
 					KeyValueTextInputFormat.class, UserMessages.UserMapper.class );
