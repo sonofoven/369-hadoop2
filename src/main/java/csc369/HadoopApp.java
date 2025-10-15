@@ -130,6 +130,33 @@ public class HadoopApp {
 		fd.delete(new Path("job1_temp"), true);
 		fd.delete(new Path("job2_temp"), true);
 
+	} else if ("URLCountries".equalsIgnoreCase(otherArgs[0])) { // Part 3
+		// JOB 1: Extract <hostname, country> & <hostname, URL> from csv file & join
+		MultipleInputs.addInputPath(job1, new Path(otherArgs[1]),
+				TextInputFormat.class, CountryURLCnt.URLMapper.class);
+		MultipleInputs.addInputPath(job1, new Path(otherArgs[2]),
+				TextInputFormat.class, CountryURLCnt.CountryMapper.class);
+
+			// Combine the two data sets for a join <URL, country>
+		job1.setReducerClass(URLCountries.JoinReducer.class);
+		job1.setOutputKeyClass(URLCountries.JOIN_OUTPUT_KEY_CLASS);
+		job1.setOutputValueClass(URLCountries.JOIN_OUTPUT_VALUE_CLASS);
+		FileOutputFormat.setOutputPath(job1, new Path("job1_temp"));
+
+		job1.waitForCompletion(true);
+
+		// JOB 2: Accumulate countries in a set and output accordingly
+		job2.setMapperClass(URLCountries.URLCollect.class);
+		job2.setReducerClass(URLCountries.URLAcc.class);
+		job2.setOutputKeyClass(URLCountries.ACCUM_OUTPUT_KEY_CLASS);
+		job2.setOutputValueClass(URLCountries.ACCUM_OUTPUT_VALUE_CLASS);
+		FileInputFormat.addInputPath(job2, new Path("job1_temp/part-r-00000"));
+		FileOutputFormat.setOutputPath(job2, new Path(otherArgs[3]));
+
+		job2.waitForCompletion(true);
+
+		fd.delete(new Path("job1_temp"), true);
+
 	} else {
 	    System.out.println("Unrecognized job: " + otherArgs[0]);
 	    System.exit(-1);
@@ -137,4 +164,5 @@ public class HadoopApp {
         System.exit(job1.waitForCompletion(true) ? 0: 1);
     }
 
+	// Man I don't like java
 }
