@@ -91,6 +91,45 @@ public class HadoopApp {
 		fd.delete(new Path("job2_temp"), true);
 		fd.delete(new Path("job3_temp"), true);
 
+	} else if ("CountryURLCnt".equalsIgnoreCase(otherArgs[0])) { // Part 2
+		// JOB 1: Extract <hostname, country> & <hostname, URL> from csv file & join
+		MultipleInputs.addInputPath(job1, new Path(otherArgs[1]),
+				TextInputFormat.class, CountryURLCnt.URLMapper.class);
+		MultipleInputs.addInputPath(job1, new Path(otherArgs[2]),
+				TextInputFormat.class, CountryURLCnt.CountryMapper.class);
+
+			// Combine the two data sets for a join <country, URL>
+		job1.setReducerClass(CountryURLCnt.JoinReducer.class);
+		job1.setOutputKeyClass(CountryURLCnt.JOIN_OUTPUT_KEY_CLASS);
+		job1.setOutputValueClass(CountryURLCnt.JOIN_OUTPUT_VALUE_CLASS);
+		FileOutputFormat.setOutputPath(job1, new Path("job1_temp"));
+
+		job1.waitForCompletion(true);
+
+		// JOB 2: Count url visits per country
+		job2.setMapperClass(CountryURLCnt.URLCollect.class);
+		job2.setReducerClass(CountryURLCnt.URLAcc.class);
+		job2.setOutputKeyClass(CountryURLCnt.ACCUM_OUTPUT_KEY_CLASS);
+		job2.setOutputValueClass(CountryURLCnt.ACCUM_OUTPUT_VALUE_CLASS);
+		FileInputFormat.addInputPath(job2, new Path("job1_temp/part-r-00000"));
+		FileOutputFormat.setOutputPath(job2, new Path("job2_temp"));
+
+		job2.waitForCompletion(true);
+
+		// JOB 3: Sort decending based on country then count (high->low)
+		job3.setMapperClass(CountryURLCnt.SortingMapper.class);
+		job3.setReducerClass(CountryURLCnt.SortingReducer.class);
+		job3.setOutputKeyClass(CountryURLCnt.SORT_OUTPUT_KEY_CLASS);
+		job3.setOutputValueClass(CountryURLCnt.SORT_OUTPUT_VALUE_CLASS);
+		FileInputFormat.addInputPath(job3, new Path("job2_temp/part-r-00000"));
+		FileOutputFormat.setOutputPath(job3, new Path(otherArgs[3]));
+
+		job3.waitForCompletion(true);
+
+		
+		fd.delete(new Path("job1_temp"), true);
+		fd.delete(new Path("job2_temp"), true);
+
 	} else {
 	    System.out.println("Unrecognized job: " + otherArgs[0]);
 	    System.exit(-1);
